@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapid Math Dojo - Daily Mental Addition Trainer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-mono-math {
+      font-family: 'Fira Code', monospace;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2s infinite ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .animate-shake {
+      animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.92); opacity: 0; }
+      70% { transform: scale(1.04); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: pop 0.25s ease-out forwards;
+    }
+    /* Hide scrollbars but keep scrollability */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20 text-white font-black text-xl">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-tight flex items-center gap-2">
+            Rapid Math Dojo
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">Daily Addition</span>
+          </h1>
+          <p class="text-xs text-slate-400">Master subconscious speed calculation</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Pill -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 rounded-xl px-3 py-1.5 shadow-sm">
+          <span class="text-amber-400 text-sm"><i class="fa-solid fa-fire"></i></span>
+          <div class="flex flex-col">
+            <span class="text-[10px] text-slate-400 font-semibold uppercase leading-none">Daily Streak</span>
+            <span id="streak-counter" class="text-xs sm:text-sm font-bold text-slate-100">1 Day</span>
+          </div>
+        </div>
+
+        <button id="btn-toggle-guide" class="text-xs bg-slate-800 hover:bg-slate-700 active:scale-95 transition border border-slate-700 text-slate-200 px-3 py-2 rounded-xl flex items-center gap-2 font-medium">
+          <i class="fa-solid fa-book-open text-indigo-400"></i>
+          <span class="hidden sm:inline">Technique Dojo</span>
+        </button>
+
+        <button id="btn-audio-toggle" title="Toggle Sound" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition border border-slate-700 flex items-center justify-center text-slate-300">
+          <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- Left Column: Training Modes & Daily Objective -->
+    <section class="lg:col-span-4 space-y-4">
+      
+      <!-- Daily Workout Mission Card -->
+      <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-emerald-400"></i> Today's Regimen
+          </h2>
+          <span id="daily-count-badge" class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">0 / 40 Done</span>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden mb-3">
+          <div id="daily-progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          Complete daily reps across core addition mechanisms to hardwire instant mental reflexes.
+        </p>
+
+        <!-- Regimen Checklist -->
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+            <span class="flex items-center gap-2 text-slate-300">
+              <span id="chk-bonds" class="w-4 h-4 rounded border border-slate-600 flex items-center justify-center text-[10px] text-slate-400"><i class="fa-solid fa-check hidden"></i></span>
+              Make 10 & 100 Bonds
+            </span>
+            <span id="count-bonds" class="font-mono text-slate-400">0/10</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+            <span class="flex items-center gap-2 text-slate-300">
+              <span id="chk-single" class="w-4 h-4 rounded border border-slate-600 flex items-center justify-center text-[10px] text-slate-400"><i class="fa-solid fa-check hidden"></i></span>
+              Single-Digit Blitz (0-9)
+            </span>
+            <span id="count-single" class="font-mono text-slate-400">0/15</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+            <span class="flex items-center gap-2 text-slate-300">
+              <span id="chk-bridge" class="w-4 h-4 rounded border border-slate-600 flex items-center justify-center text-[10px] text-slate-400"><i class="fa-solid fa-check hidden"></i></span>
+              Bridging Tens (e.g. 8+7)
+            </span>
+            <span id="count-bridge" class="font-mono text-slate-400">0/10</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-800">
+            <span class="flex items-center gap-2 text-slate-300">
+              <span id="chk-sprint" class="w-4 h-4 rounded border border-slate-600 flex items-center justify-center text-[10px] text-slate-400"><i class="fa-solid fa-check hidden"></i></span>
+              60s Speed Sprint
+            </span>
+            <span id="count-sprint" class="font-mono text-slate-400">0/1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block px-1">Drill Modules</label>
+        
+        <button data-mode="bonds" class="mode-btn w-full text-left p-3 rounded-xl border transition flex items-center justify-between bg-indigo-600/20 border-indigo-500/60 text-white shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/30 text-indigo-300 flex items-center justify-center text-sm font-bold">10</div>
+            <div>
+              <div class="font-semibold text-sm">Number Bonds</div>
+              <div class="text-[11px] text-slate-400">Sum to 10 & 100 anchors</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-indigo-400"></i>
+        </button>
+
+        <button data-mode="single" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-900/70 hover:bg-slate-800/50 text-slate-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-sm font-bold">9+</div>
+            <div>
+              <div class="font-semibold text-sm text-slate-200">Single-Digit Blitz</div>
+              <div class="text-[11px] text-slate-400">Sub-second reflexes (0-9 + 0-9)</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+        </button>
+
+        <button data-mode="bridge" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-900/70 hover:bg-slate-800/50 text-slate-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm font-bold">🌉</div>
+            <div>
+              <div class="font-semibold text-sm text-slate-200">Bridging Over 10</div>
+              <div class="text-[11px] text-slate-400">Break and complete friendly 10s</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+        </button>
+
+        <button data-mode="twodigit" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-900/70 hover:bg-slate-800/50 text-slate-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm font-bold">⬅️</div>
+            <div>
+              <div class="font-semibold text-sm text-slate-200">Left-to-Right 2-Digit</div>
+              <div class="text-[11px] text-slate-400">Tens first, then ones: 47 + 38</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+        </button>
+
+        <button data-mode="chain" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-900/70 hover:bg-slate-800/50 text-slate-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center text-sm font-bold">🔗</div>
+            <div>
+              <div class="font-semibold text-sm text-slate-200">Chained Addition</div>
+              <div class="text-[11px] text-slate-400">Running mental sum: 4+8+6+5</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+        </button>
+
+        <button data-mode="sprint" class="mode-btn w-full text-left p-3 rounded-xl border border-rose-500/30 hover:border-rose-500/60 bg-gradient-to-r from-rose-950/30 to-slate-900 text-slate-200 transition flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-300 flex items-center justify-center text-sm font-bold">⏱️</div>
+            <div>
+              <div class="font-semibold text-sm text-rose-200">60-Second Blitz Sprint</div>
+              <div class="text-[11px] text-slate-400">Race the clock for personal best</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-rose-400"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <section class="lg:col-span-8 flex flex-col gap-4">
+      
+      <!-- Training Arena Container -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl relative flex flex-col min-h-[460px] justify-between">
+        
+        <!-- Arena Top Header: Mode label & Live performance stats -->
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+          <div>
+            <span id="arena-mode-tag" class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+              Number Bonds Drill
+            </span>
+            <p id="arena-mode-desc" class="text-xs text-slate-400 mt-0.5">Identify what completes the 10 or 100 anchor</p>
+          </div>
+
+          <!-- Speed & Streak stats badge -->
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Streak</div>
+              <div id="stat-streak" class="font-mono font-bold text-amber-400 text-sm">0 🔥</div>
+            </div>
+            <div class="h-6 w-px bg-slate-800"></div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Avg Pace</div>
+              <div id="stat-pace" class="font-mono font-bold text-emerald-400 text-sm">0.0s</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timer Bar for Sprint Mode -->
+        <div id="sprint-timer-bar-wrap" class="hidden w-full bg-slate-800/70 rounded-full h-1.5 overflow-hidden my-2">
+          <div id="sprint-timer-bar" class="bg-gradient-to-r from-amber-400 to-rose-500 h-full rounded-full transition-all duration-100 ease-linear" style="width: 100%"></div>
+        </div>
+
+        <!-- Main Math Problem Area -->
+        <div id="problem-display-card" class="py-6 flex flex-col items-center justify-center text-center">
+          
+          <div id="question-label" class="text-xs sm:text-sm font-semibold uppercase tracking-widest text-slate-400 mb-2">
+            Calculate the sum
+          </div>
+          
+          <!-- The equation -->
+          <div class="relative inline-flex items-center justify-center">
+            <div id="math-problem" class="font-mono-math text-4xl sm:text-6xl font-bold tracking-tight text-white py-2 px-4 transition-transform duration-150">
+              7 + 3 = ?
+            </div>
+          </div>
+
+          <!-- Real-Time Strategy Guidance (Toggleable / Contextual) -->
+          <div id="technique-tip-box" class="mt-4 max-w-md w-full bg-indigo-950/40 border border-indigo-800/40 rounded-xl px-4 py-2.5 text-xs text-indigo-200 text-left flex items-start gap-2.5 shadow-sm">
+            <span class="text-indigo-400 mt-0.5"><i class="fa-solid fa-lightbulb"></i></span>
+            <div class="flex-1">
+              <span class="font-semibold text-indigo-300 block mb-0.5">Mental Strategy:</span>
+              <span id="technique-tip-text">Look for the partner that completes 10 (e.g. 7 needs 3).</span>
+            </div>
+          </div>
+
+          <!-- Live Input Preview / Answer Box -->
+          <div class="mt-6 flex items-center justify-center gap-3">
+            <div id="answer-preview" class="min-w-[140px] h-14 bg-slate-950 border-2 border-indigo-500/50 rounded-2xl flex items-center justify-center text-3xl font-mono-math font-bold text-indigo-300 shadow-inner px-4 tracking-wider">
+              <span id="input-buffer" class="text-white"></span>
+              <span id="cursor-caret" class="inline-block w-2.5 h-7 bg-indigo-400 ml-1 animate-pulse"></span>
+            </div>
+          </div>
+
+          <!-- Feedback Status Text -->
+          <div id="feedback-msg" class="h-6 mt-2 text-xs font-semibold tracking-wide text-transparent">
+            Ready
+          </div>
+        </div>
+
+        <div class="mt-2 border-t border-slate-800/80 pt-4">
+          
+          <!-- On-screen Numpad for Touch & Mobile Devices -->
+          <div class="max-w-sm mx-auto grid grid-cols-3 gap-2 sm:gap-2.5">
+            <button data-key="1" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">1</button>
+            <button data-key="2" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">2</button>
+            <button data-key="3" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">3</button>
+            
+            <button data-key="4" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">4</button>
+            <button data-key="5" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">5</button>
+            <button data-key="6" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">6</button>
+            
+            <button data-key="7" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">7</button>
+            <button data-key="8" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">8</button>
+            <button data-key="9" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">9</button>
+            
+            <button data-key="clear" class="pad-btn h-12 sm:h-14 bg-rose-950/30 hover:bg-rose-900/40 active:scale-95 border border-rose-800/50 rounded-xl text-sm font-semibold text-rose-300 transition shadow flex items-center justify-center">
+              CLR
+            </button>
+            <button data-key="0" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-xl font-bold font-mono-math text-slate-100 transition shadow">0</button>
+            <button data-key="backspace" class="pad-btn h-12 sm:h-14 bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 rounded-xl text-lg font-bold text-slate-300 transition shadow flex items-center justify-center">
+              <i class="fa-solid fa-delete-left"></i>
+            </button>
+          </div>
+
+          <div class="mt-3 text-center">
+            <span class="text-[11px] text-slate-500">
+              💡 Tip: Keyboard number keys (0-9) & Backspace / Enter are fully active!
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-300">Session Accuracy: <span id="session-accuracy" class="text-emerald-400 font-mono">100%</span></div>
+            <div class="text-[11px] text-slate-500">Problems Solved: <span id="session-solved-count" class="font-mono text-slate-300">0</span> &bull; Best Pace: <span id="session-best-pace" class="font-mono text-slate-300">--</span></div>
+          </div>
+        </div>
+
+        <button id="btn-reset-session" class="text-xs text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700 px-3 py-1.5 rounded-lg transition active:scale-95">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Reset Drill Stats
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <div id="guide-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-pop">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-white">Technique Dojo: Mental Math Mastery</h3>
+            <p class="text-xs text-slate-400">The 4 core techniques mental athletes use</p>
+          </div>
+        </div>
+        <button id="btn-close-guide" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div class="p-5 overflow-y-auto space-y-4 no-scrollbar text-sm">
+        
+        <!-- Strategy 1: Number Bonds -->
+        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+          <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm mb-1">
+            <i class="fa-solid fa-link"></i> 1. Number Bonds (10 & 100 Anchors)
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-2">
+            Never calculate <code class="bg-slate-800 px-1 py-0.5 rounded text-indigo-300">7 + 3</code> from scratch. Turn them into instantaneous subconscious pairs:
+          </p>
+          <div class="grid grid-cols-5 gap-1.5 text-center font-mono text-xs">
+            <div class="p-1.5 bg-slate-900 rounded border border-slate-800 text-slate-300">1 + 9</div>
+            <div class="p-1.5 bg-slate-900 rounded border border-slate-800 text-slate-300">2 + 8</div>
+            <div class="p-1.5 bg-slate-900 rounded border border-slate-800 text-slate-300">3 + 7</div>
+            <div class="p-1.5 bg-slate-900 rounded border border-slate-800 text-slate-300">4 + 6</div>
+            <div class="p-1.5 bg-slate-900 rounded border border-slate-800 text-slate-300">5 + 5</div>
+          </div>
+        </div>
+
+        <!-- Strategy 2: Bridging Across 10 -->
+        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+          <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm mb-1">
+            <i class="fa-solid fa-bridge"></i> 2. Bridging Tens (Break & Complete)
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-2">
+            When adding across a ten threshold (e.g., <code class="bg-slate-800 px-1 py-0.5 rounded text-cyan-300">8 + 7</code>), do not count up by ones. Break the second number into what completes 10:
+          </p>
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+            <div>8 needs <span class="text-cyan-400 font-bold">2</span> to make 10.</div>
+            <div>Split 7 into <span class="text-cyan-400 font-bold">(2 + 5)</span>.</div>
+            <div>Then: <span class="text-emerald-400">(8 + 2) + 5 = 10 + 5 = 15</span>.</div>
+          </div>
+        </div>
+
+        <!-- Strategy 3: Left-to-Right Addition -->
+        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+          <div class="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1">
+            <i class="fa-solid fa-arrow-right"></i> 3. Left-to-Right (Tens Before Ones)
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-2">
+            Standard paper math goes right-to-left with carries. Mental math does the opposite: <strong>Add largest values first!</strong>
+          </p>
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+            <div class="text-slate-400">Problem: 58 + 27</div>
+            <div>1. Add Tens: <span class="text-amber-400">50 + 20 = 70</span></div>
+            <div>2. Add Ones: <span class="text-amber-400">8 + 7 = 15</span></div>
+            <div>3. Combine: <span class="text-emerald-400">70 + 15 = 85</span></div>
+          </div>
+        </div>
+
+        <!-- Strategy 4: Compensation -->
+        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+          <div class="flex items-center gap-2 text-rose-400 font-bold text-sm mb-1">
+            <i class="fa-solid fa-scale-balanced"></i> 4. Rounding & Compensation
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-2">
+            For numbers ending in 8 or 9 (e.g., 29, 48), round up to the nearest ten and subtract the overshoot:
+          </p>
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+            <div class="text-slate-400">Problem: 46 + 29</div>
+            <div>Treat 29 as <span class="text-rose-400">(30 - 1)</span></div>
+            <div><span class="text-emerald-400">46 + 30 = 76</span>, then <span class="text-emerald-400">76 - 1 = 75</span>!</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+        <button id="btn-got-it" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition active:scale-95">
+          Start Practicing Techniques
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Audio synthesizer for clean zero-external-dependency feedback
+    let audioCtx = null;
+    let isSoundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.08) {
+      if (!isSoundEnabled) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // Audio error fail silently
+      }
+    }
+
+    function playSuccessChime() {
+      if (!isSoundEnabled) return;
+      playTone(523.25, 'sine', 0.1, 0.09); // C5
+      setTimeout(() => playTone(659.25, 'sine', 0.12, 0.08), 70); // E5
+      setTimeout(() => playTone(783.99, 'sine', 0.18, 0.07), 140); // G5
+    }
+
+    function playErrorBuzzer() {
+      if (!isSoundEnabled) return;
+      playTone(220, 'sawtooth', 0.15, 0.06);
+      setTimeout(() => playTone(185, 'sawtooth', 0.2, 0.06), 80);
+    }
+
+    function playKeyClick() {
+      if (!isSoundEnabled) return;
+      playTone(700, 'triangle', 0.03, 0.02);
+    }
+
+    function playStreakCelebration() {
+      if (!isSoundEnabled) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playTone(freq, 'sine', 0.2, 0.08), idx * 80);
+      });
+    }
+
+    // State management
+    const state = {
+      mode: 'bonds', // 'bonds', 'single', 'bridge', 'twodigit', 'chain', 'sprint'
+      currentProblem: null,
+      inputBuffer: '',
+      streak: 0,
+      totalSolvedSession: 0,
+      correctSession: 0,
+      responseTimes: [],
+      problemStartTime: Date.now(),
+      
+      // Daily Goal Checklist
+      dailyProgress: {
+        bonds: 0,
+        single: 0,
+        bridge: 0,
+        sprint: 0
+      },
+      dailyTargets: {
+        bonds: 10,
+        single: 15,
+        bridge: 10,
+        sprint: 1
+      },
+      
+      // Sprint Mode state
+      isSprintActive: false,
+      sprintDuration: 60,
+      sprintSecondsLeft: 60,
+      sprintTimerId: null
+    };
+
+    // DOM Elements
+    const elements = {
+      mathProblem: document.getElementById('math-problem'),
+      inputBuffer: document.getElementById('input-buffer'),
+      feedbackMsg: document.getElementById('feedback-msg'),
+      techniqueTipText: document.getElementById('technique-tip-text'),
+      arenaModeTag: document.getElementById('arena-mode-tag'),
+      arenaModeDesc: document.getElementById('arena-mode-desc'),
+      statStreak: document.getElementById('stat-streak'),
+      statPace: document.getElementById('stat-pace'),
+      sessionAccuracy: document.getElementById('session-accuracy'),
+      sessionSolvedCount: document.getElementById('session-solved-count'),
+      sessionBestPace: document.getElementById('session-best-pace'),
+      dailyProgressBar: document.getElementById('daily-progress-bar'),
+      dailyCountBadge: document.getElementById('daily-count-badge'),
+      countBonds: document.getElementById('count-bonds'),
+      countSingle: document.getElementById('count-single'),
+      countBridge: document.getElementById('count-bridge'),
+      countSprint: document.getElementById('count-sprint'),
+      chkBonds: document.getElementById('chk-bonds'),
+      chkSingle: document.getElementById('chk-single'),
+      chkBridge: document.getElementById('chk-bridge'),
+      chkSprint: document.getElementById('chk-sprint'),
+      sprintTimerBarWrap: document.getElementById('sprint-timer-bar-wrap'),
+      sprintTimerBar: document.getElementById('sprint-timer-bar'),
+      problemDisplayCard: document.getElementById('problem-display-card'),
+      answerPreview: document.getElementById('answer-preview'),
+      guideModal: document.getElementById('guide-modal')
+    };
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateProblem(mode) {
+      let prompt = '';
+      let answer = 0;
+      let hint = '';
+
+      switch(mode) {
+        case 'bonds': {
+          const type = Math.random() > 0.35 ? 'ten' : 'hundred';
+          if (type === 'ten') {
+            const a = randomInt(1, 9);
+            const b = 10 - a;
+            if (Math.random() > 0.5) {
+              prompt = `${a} + __ = 10`;
+              answer = b;
+              hint = `Bonds to 10: Pair ${a} with ${b}`;
+            } else {
+              prompt = `${a} + ${b} = ?`;
+              answer = 10;
+              hint = `Instant bond: ${a} and ${b} make a clean 10.`;
+            }
+          } else {
+            // Making 100
+            const multiples = [10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90];
+            const a = multiples[randomInt(0, multiples.length - 1)];
+            const b = 100 - a;
+            prompt = `${a} + __ = 100`;
+            answer = b;
+            hint = `Bonds to 100: ${a} + ${b} = 100.`;
+          }
+          break;
+        }
+
+        case 'single': {
+          const a = randomInt(2, 9);
+          const b = randomInt(2, 9);
+          prompt = `${a} + ${b} = ?`;
+          answer = a + b;
+          hint = `Single digit reflex. Aim for immediate answer under 1.0 second.`;
+          break;
+        }
+
+        case 'bridge': {
+          // Addition bridging over 10: e.g. 8+7, 9+6, 7+5, 8+6
+          const a = randomInt(6, 9);
+          const needed = 10 - a;
+          const b = randomInt(needed + 1, 9);
+          const leftover = b - needed;
+          prompt = `${a} + ${b} = ?`;
+          answer = a + b;
+          hint = `Bridge: ${a} needs ${needed} to reach 10. Split ${b} into (${needed} + ${leftover}) → 10 + ${leftover} = ${answer}.`;
+          break;
+        }
+
+        case 'twodigit': {
+          // Left to right addition: tens first, then ones
+          const a1 = randomInt(2, 8) * 10;
+          const a2 = randomInt(1, 9);
+          const b1 = randomInt(1, 8) * 10;
+          const b2 = randomInt(1, 9);
+          
+          const a = a1 + a2;
+          const b = b1 + b2;
+          prompt = `${a} + ${b} = ?`;
+          answer = a + b;
+          const sumTens = a1 + b1;
+          const sumOnes = a2 + b2;
+          hint = `Left-to-Right: (${a1} + ${b1} = ${sumTens}) then ones (${a2} + ${b2} = ${sumOnes}) → ${sumTens} + ${sumOnes} = ${answer}.`;
+          break;
+        }
+
+        case 'chain': {
+          // Chained sums (3 to 4 numbers)
+          const count = randomInt(3, 4);
+          const nums = [];
+          for (let i = 0; i < count; i++) {
+            nums.push(randomInt(2, 9));
+          }
+          answer = nums.reduce((acc, val) => acc + val, 0);
+          prompt = nums.join(' + ') + ' = ?';
+          hint = `Scan for pairs that sum to 10 first to simplify the sequence!`;
+          break;
+        }
+
+        case 'sprint': {
+          // Mixed speed problems
+          const r = Math.random();
+          if (r < 0.4) {
+            return generateProblem('single');
+          } else if (r < 0.7) {
+            return generateProblem('bridge');
+          } else {
+            return generateProblem('twodigit');
+          }
+        }
+      }
+
+      return { prompt, answer, hint };
+    }
+
+    function displayNewProblem() {
+      state.currentProblem = generateProblem(state.mode);
+      state.inputBuffer = '';
+      state.problemStartTime = Date.now();
+      
+      elements.mathProblem.textContent = state.currentProblem.prompt;
+      elements.techniqueTipText.textContent = state.currentProblem.hint;
+      elements.inputBuffer.textContent = '';
+      elements.feedbackMsg.textContent = '';
+      elements.feedbackMsg.className = 'h-6 mt-2 text-xs font-semibold tracking-wide text-transparent';
+
+      // Visual entrance animation
+      elements.mathProblem.classList.remove('animate-pop');
+      void elements.mathProblem.offsetWidth;
+      elements.mathProblem.classList.add('animate-pop');
+    }
+
+    function updateStatsUI() {
+      // Streak
+      elements.statStreak.textContent = `${state.streak} 🔥`;
+      
+      // Pace
+      if (state.responseTimes.length > 0) {
+        const avg = state.responseTimes.reduce((a, b) => a + b, 0) / state.responseTimes.length;
+        elements.statPace.textContent = `${(avg / 1000).toFixed(2)}s`;
+        const best = Math.min(...state.responseTimes);
+        elements.sessionBestPace.textContent = `${(best / 1000).toFixed(2)}s`;
+      } else {
+        elements.statPace.textContent = '0.0s';
+        elements.sessionBestPace.textContent = '--';
+      }
+
+      // Solved & Accuracy
+      elements.sessionSolvedCount.textContent = state.totalSolvedSession;
+      if (state.totalSolvedSession > 0) {
+        const acc = Math.round((state.correctSession / state.totalSolvedSession) * 100);
+        elements.sessionAccuracy.textContent = `${acc}%`;
+      } else {
+        elements.sessionAccuracy.textContent = '100%';
+      }
+
+      // Daily Workout Progress
+      const sumDone = Object.values(state.dailyProgress).reduce((a, b) => a + b, 0);
+      const totalGoal = Object.values(state.dailyTargets).reduce((a, b) => a + b, 0);
+      const percent = Math.min(100, Math.round((sumDone / totalGoal) * 100));
+      
+      elements.dailyProgressBar.style.width = `${percent}%`;
+      elements.dailyCountBadge.textContent = `${sumDone} / ${totalGoal} Done`;
+
+      elements.countBonds.textContent = `${Math.min(state.dailyTargets.bonds, state.dailyProgress.bonds)}/${state.dailyTargets.bonds}`;
+      elements.countSingle.textContent = `${Math.min(state.dailyTargets.single, state.dailyProgress.single)}/${state.dailyTargets.single}`;
+      elements.countBridge.textContent = `${Math.min(state.dailyTargets.bridge, state.dailyProgress.bridge)}/${state.dailyTargets.bridge}`;
+      elements.countSprint.textContent = `${Math.min(state.dailyTargets.sprint, state.dailyProgress.sprint)}/${state.dailyTargets.sprint}`;
+
+      // Checkbox highlights
+      toggleCheck(elements.chkBonds, state.dailyProgress.bonds >= state.dailyTargets.bonds);
+      toggleCheck(elements.chkSingle, state.dailyProgress.single >= state.dailyTargets.single);
+      toggleCheck(elements.chkBridge, state.dailyProgress.bridge >= state.dailyTargets.bridge);
+      toggleCheck(elements.chkSprint, state.dailyProgress.sprint >= state.dailyTargets.sprint);
+    }
+
+    function toggleCheck(boxEl, isComplete) {
+      const icon = boxEl.querySelector('i');
+      if (isComplete) {
+        boxEl.className = 'w-4 h-4 rounded bg-emerald-500 border border-emerald-400 flex items-center justify-center text-[10px] text-white';
+        icon.classList.remove('hidden');
+      } else {
+        boxEl.className = 'w-4 h-4 rounded border border-slate-600 flex items-center justify-center text-[10px] text-slate-400';
+        icon.classList.add('hidden');
+      }
+    }
+
+    function checkAnswer() {
+      if (!state.inputBuffer) return;
+      const userVal = parseInt(state.inputBuffer, 10);
+      const correctVal = state.currentProblem.answer;
+      const duration = Date.now() - state.problemStartTime;
+
+      state.totalSolvedSession++;
+
+      if (userVal === correctVal) {
+        // Correct
+        state.correctSession++;
+        state.streak++;
+        state.responseTimes.push(duration);
+
+        // Daily task progress mapping
+        if (state.mode in state.dailyProgress) {
+          state.dailyProgress[state.mode]++;
+        }
+
+        playSuccessChime();
+        if (state.streak > 0 && state.streak % 10 === 0) {
+          playStreakCelebration();
+        }
+
+        elements.feedbackMsg.textContent = `⚡ Outstanding! Solved in ${(duration / 1000).toFixed(2)}s`;
+        elements.feedbackMsg.className = 'h-6 mt-2 text-xs font-semibold tracking-wide text-emerald-400 animate-pop';
+        
+        elements.answerPreview.classList.add('border-emerald-500', 'bg-emerald-950/20');
+        setTimeout(() => {
+          elements.answerPreview.classList.remove('border-emerald-500', 'bg-emerald-950/20');
+          displayNewProblem();
+          updateStatsUI();
+        }, 220);
+
+      } else {
+        // Incorrect
+        state.streak = 0;
+        playErrorBuzzer();
+
+        elements.feedbackMsg.textContent = `❌ Correct was ${correctVal}. Look at the technique cue!`;
+        elements.feedbackMsg.className = 'h-6 mt-2 text-xs font-semibold tracking-wide text-rose-400 animate-shake';
+
+        elements.problemDisplayCard.classList.add('animate-shake');
+        elements.answerPreview.classList.add('border-rose-500', 'bg-rose-950/20');
+        
+        setTimeout(() => {
+          elements.problemDisplayCard.classList.remove('animate-shake');
+          elements.answerPreview.classList.remove('border-rose-500', 'bg-rose-950/20');
+          state.inputBuffer = '';
+          elements.inputBuffer.textContent = '';
+          updateStatsUI();
+        }, 650);
+      }
+    }
+
+    function appendInput(val) {
+      initAudio();
+      playKeyClick();
+      if (state.inputBuffer.length >= 4) return;
+      state.inputBuffer += val;
+      elements.inputBuffer.textContent = state.inputBuffer;
+
+      // Auto-evaluate when user enters enough digits
+      const targetLength = state.currentProblem.answer.toString().length;
+      if (state.inputBuffer.length >= targetLength) {
+        checkAnswer();
+      }
+    }
+
+    function clearInput() {
+      playKeyClick();
+      state.inputBuffer = '';
+      elements.inputBuffer.textContent = '';
+    }
+
+    function backspaceInput() {
+      playKeyClick();
+      state.inputBuffer = state.inputBuffer.slice(0, -1);
+      elements.inputBuffer.textContent = state.inputBuffer;
+    }
+
+    function switchMode(newMode) {
+      if (state.isSprintActive && newMode !== 'sprint') {
+        stopSprintTimer();
+      }
+
+      state.mode = newMode;
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        if (btn.dataset.mode === newMode) {
+          btn.className = 'mode-btn w-full text-left p-3 rounded-xl border transition flex items-center justify-between bg-indigo-600/20 border-indigo-500/60 text-white shadow-sm';
+          const icon = btn.querySelector('.fa-chevron-right');
+          if (icon) icon.className = 'fa-solid fa-chevron-right text-xs text-indigo-400';
+        } else {
+          btn.className = 'mode-btn w-full text-left p-3 rounded-xl border border-slate-800/80 hover:border-slate-700 bg-slate-900/70 hover:bg-slate-800/50 text-slate-300 transition flex items-center justify-between';
+          const icon = btn.querySelector('.fa-chevron-right');
+          if (icon) icon.className = 'fa-solid fa-chevron-right text-xs text-slate-500';
+        }
+      });
+
+      const modeDetails = {
+        bonds: { title: 'Number Bonds Drill', desc: 'Identify what completes the 10 or 100 anchor' },
+        single: { title: 'Single-Digit Blitz (0-9)', desc: 'Pure instinctive recognition with no hesitation' },
+        bridge: { title: 'Bridging Over 10', desc: 'Partition second operand to reach friendly 10' },
+        twodigit: { title: 'Left-to-Right 2-Digit', desc: 'Decompose into tens first, then add ones' },
+        chain: { title: 'Chained Sequence Drill', desc: 'Maintain running mental accumulation' },
+        sprint: { title: '60-Second Speed Sprint', desc: 'Score as many rapid additions before time runs out' }
+      };
+
+      elements.arenaModeTag.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span> ${modeDetails[newMode].title}`;
+      elements.arenaModeDesc.textContent = modeDetails[newMode].desc;
+
+      if (newMode === 'sprint') {
+        elements.sprintTimerBarWrap.classList.remove('hidden');
+        startSprintTimer();
+      } else {
+        elements.sprintTimerBarWrap.classList.add('hidden');
+      }
+
+      displayNewProblem();
+      updateStatsUI();
+    }
+
+    function startSprintTimer() {
+      state.isSprintActive = true;
+      state.sprintSecondsLeft = state.sprintDuration;
+      elements.sprintTimerBar.style.width = '100%';
+
+      if (state.sprintTimerId) clearInterval(state.sprintTimerId);
+
+      state.sprintTimerId = setInterval(() => {
+        state.sprintSecondsLeft--;
+        const pct = Math.max(0, (state.sprintSecondsLeft / state.sprintDuration) * 100);
+        elements.sprintTimerBar.style.width = `${pct}%`;
+
+        if (state.sprintSecondsLeft <= 0) {
+          stopSprintTimer();
+          state.dailyProgress.sprint++;
+          playStreakCelebration();
+          elements.feedbackMsg.textContent = `🏁 Sprint Finished! Great job pushing your limit.`;
+          elements.feedbackMsg.className = 'h-6 mt-2 text-xs font-semibold tracking-wide text-amber-300 animate-pop';
+          updateStatsUI();
+        }
+      }, 1000);
+    }
+
+    function stopSprintTimer() {
+      state.isSprintActive = false;
+      if (state.sprintTimerId) {
+        clearInterval(state.sprintTimerId);
+        state.sprintTimerId = null;
+      }
+    }
+
+    // Hardware keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      // Numbers 0 to 9
+      if (e.key >= '0' && e.key <= '9') {
+        appendInput(e.key);
+      } else if (e.key === 'Backspace') {
+        backspaceInput();
+      } else if (e.key === 'Enter') {
+        checkAnswer();
+      } else if (e.key === 'Escape') {
+        clearInput();
+      }
+    });
+
+    // Virtual Numpad clicks
+    document.querySelectorAll('.pad-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        if (key === 'clear') {
+          clearInput();
+        } else if (key === 'backspace') {
+          backspaceInput();
+        } else {
+          appendInput(key);
+        }
+      });
+    });
+
+    // Mode Selector clicks
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchMode(btn.dataset.mode);
+      });
+    });
+
+    // Sound Toggle
+    document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+      isSoundEnabled = !isSoundEnabled;
+      const icon = document.getElementById('audio-icon');
+      if (isSoundEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        playKeyClick();
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+      }
+    });
+
+    // Reset session stats
+    document.getElementById('btn-reset-session').addEventListener('click', () => {
+      state.totalSolvedSession = 0;
+      state.correctSession = 0;
+      state.streak = 0;
+      state.responseTimes = [];
+      updateStatsUI();
+      displayNewProblem();
+    });
+
+    // Technique Dojo Modal controls
+    const guideModal = elements.guideModal;
+    document.getElementById('btn-toggle-guide').addEventListener('click', () => {
+      guideModal.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-guide').addEventListener('click', () => {
+      guideModal.classList.add('hidden');
+    });
+    document.getElementById('btn-got-it').addEventListener('click', () => {
+      guideModal.classList.add('hidden');
+    });
+    guideModal.addEventListener('click', (e) => {
+      if (e.target === guideModal) guideModal.classList.add('hidden');
+    });
+
+    // Initialize initial state on load
+    window.addEventListener('DOMContentLoaded', () => {
+      displayNewProblem();
+      updateStatsUI();
+    });
+  </script>
+</body>
+</html>
